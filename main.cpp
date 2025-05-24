@@ -146,7 +146,7 @@ string generateTempId(const string& date, const string& type, const set<string>&
     return "TEMP-" + date.substr(0,4) + type.substr(0,3) + to_string(parties.size());
 }
 
-void registerContract(AVLTree& avl) {
+void registerContract(AVLTree& avl, HashTable& hashTable) {
     Contract newContract;
     
     // 1. Capturar todos los datos/Capture all data. MP Chaparro, DF Mosquera.
