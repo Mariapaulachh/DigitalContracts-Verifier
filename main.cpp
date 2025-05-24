@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include "HashGenerator.cpp" 
+#include "HashTable.cpp"
 
 using namespace std;
 
@@ -135,7 +136,7 @@ struct Contract {
 
 // Funciones AVL / AVL Functions. MP Chaparro, DF Mosquera.
 string generateTempId(const string& date, const string& type, const set<string>& parties); // Provisional
-void registerContract(AVLTree& avl);
+void registerContract(AVLTree& avl, HashTable& hashTable);
 void searchByDate(const AVLTree& avl);
 void displayContractDetails(const string& id); 
 
@@ -186,6 +187,8 @@ void registerContract(AVLTree& avl) {
     int tableSize = 101;
     int hashIndex = generateHash(claveHash, tableSize);
     newContract.id = "ID-" + to_string(hashIndex);
+    hashTable.insert(newContract);  //  Aquí se guarda el contrato completo
+
     
     
     // 3. Almacenar en AVL (solo fecha e ID TEMPORAL por ahora)
@@ -240,27 +243,75 @@ void displayMenu() {
     cout << "Opción / Choice: ";
 }
 
+void displayContractDetails(const Contract& c) {
+    cout << "\n🔎 Detalles del contrato:\n";
+    cout << "ID: " << c.id << endl;
+    cout << "Fecha: " << c.date << endl;
+    cout << "Tipo: " << c.type << endl;
+
+    cout << "Partes:\n";
+    for (const auto& p : c.parties) {
+        cout << "- " << p << endl;
+    }
+
+    cout << "Cláusulas:\n";
+    for (const auto& cl : c.clauses) {
+        cout << "• " << cl << endl;
+    }
+}
+
+
 // -------------------- Función Principal/ Main Function--------------------
 int main() {
     AVLTree contractsByDate;
+    HashTable hashTable;    
     int option;
+    
 
     do {
         displayMenu();
         cin >> option;
 
         switch(option) {
-            case 1: 
-                registerContract(contractsByDate); 
-                break;
-            case 2: 
-                searchByDate(contractsByDate); 
-                break;
-            case 3: 
-                cout << "Salir / Exit\n";
-                break;
-            default: 
-                cout << "Opción inválida/Invalid option\n";
+    case 1:
+        registerContract(contractsByDate, hashTable);
+        break;
+
+    case 2:
+        searchByDate(contractsByDate);
+        break;
+
+    case 3: {
+        string id;
+        cout << "Ingrese el ID del contrato: ";
+        cin >> id;
+        Contract* c = hashTable.search(id);
+        if (c != nullptr) {
+            displayContractDetails(*c);
+            delete c;
+        } else {
+            cout << "⚠️ Contrato no encontrado.\n";
+        }
+        break;
+    }
+
+    case 4: {
+        string tipo;
+        cout << "Ingrese el tipo de contrato (préstamo / seguro / inversión): ";
+        cin.ignore();
+        getline(cin, tipo);
+        hashTable.displayByType(tipo);
+        break;
+    }
+
+    case 5:
+        cout << "Saliendo del sistema. ¡Hasta luego!\n";
+        break;
+
+    default:
+        cout << "Opción inválida / Invalid option\n";
+}
+
         }
     } while(option != 3);
 
