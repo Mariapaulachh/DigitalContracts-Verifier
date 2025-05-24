@@ -1,26 +1,18 @@
-/*
- * ======================================================================
- * Sistema de Registro y Verificación de Contratos Digitales /
- * Digital Contract Registration and Verification System
- * 
- * Proyecto para la clase de Algoritmos y Estructuras de Datos /
- * Project for Algorithms and Data Structures Class
- * 
- * Universidad del Rosario, Colombia 🇨🇴
- * 
- * Desarrollado por / Developed by:
- * - Maria Paula Chaparro
- * - Daniel Felipe Mosquera
- * ======================================================================
- */
+// ======================================================================
+// Sistema de Registro y Verificación de Contratos Digitales /
+// Digital Contract Registration and Verification System
+// Proyecto para la clase de Algoritmos y Estructuras de Datos
+// Universidad del Rosario, Colombia 🇨🇴
+// Desarrollado por: Maria Paula Chaparro y Daniel Felipe Mosquera
+// ======================================================================
 
 #include <iostream>
 #include <string>
 #include <set>
 #include <vector>
 #include <algorithm>
-#include "HashGenerator.cpp" 
-#include "HashTable.cpp"
+#include "HashTable.h"
+#include "HashGenerator.cpp"
 
 using namespace std;
 
@@ -28,19 +20,18 @@ using namespace std;
 class AVLTree {
 private:
     struct AvlNode {
-        string date;        
-        string contractId;  
+        string date;
+        string contractId;
         AvlNode* left;
         AvlNode* right;
         int height;
 
-        AvlNode(const string& d, const string& id) 
+        AvlNode(const string& d, const string& id)
             : date(d), contractId(id), left(nullptr), right(nullptr), height(0) {}
     };
 
     AvlNode* root;
     static const int ALLOWED_IMBALANCE = 1;
-
 
     int height(AvlNode* t) const {
         return t == nullptr ? -1 : t->height;
@@ -96,7 +87,7 @@ private:
     void insert(const string& date, const string& id, AvlNode*& t) {
         if (!t) {
             t = new AvlNode(date, id);
-        } 
+        }
         else if (date < t->date) {
             insert(date, id, t->left);
         }
@@ -115,7 +106,7 @@ private:
 
 public:
     AVLTree() : root(nullptr) {}
-    
+
     void insert(const string& date, const string& id) {
         insert(date, id, root);
     }
@@ -125,59 +116,37 @@ public:
     }
 };
 
-// Estructura de un contrato / Contract structure. MP Chaparro, DF Mosquera.
-struct Contract {
-    string id;          // ID único / Unique ID. MP Chaparro, DF Mosquera.
-    string date;        // Fecha de creación (YYYY-MM-DD) / Creation date. MP Chaparro, DF Mosquera.
-    string type;        // Tipo: "préstamo", "seguro", "inversión" / Type: "loan", "insurance", "investment". MP Chaparro, DF Mosquera.
-    set<string> parties; // Partes involucradas / Involved parties. MP Chaparro, DF Mosquera.
-    vector<string> clauses; // Cláusulas / Contract clauses. MP Chaparro, DF Mosquera.
-};
-
-// Funciones AVL / AVL Functions. MP Chaparro, DF Mosquera.
-string generateTempId(const string& date, const string& type, const set<string>& parties); // Provisional
-void registerContract(AVLTree& avl, HashTable& hashTable);
-void searchByDate(const AVLTree& avl);
-void displayContractDetails(const string& id); 
-
-// Implementaciones  --- MEJORAR 
-string generateTempId(const string& date, const string& type, const set<string>& parties) {
-    // ID provisional ( reemplazar por el hash)
-    return "TEMP-" + date.substr(0,4) + type.substr(0,3) + to_string(parties.size());
-}
+// -------------------- Funciones --------------------
 
 void registerContract(AVLTree& avl, HashTable& hashTable) {
     Contract newContract;
-    
-    // 1. Capturar todos los datos/Capture all data. MP Chaparro, DF Mosquera.
-    
+
     cout << "\n--- Registrar contrato / Register contract---\n";
-    cout << "Fecha (YYYY-MM-DD)/ Enter date (YYYY-MM-DD): ";
+    cout << "Fecha (YYYY-MM-DD): ";
     cin >> newContract.date;
-    
-    cout << "Tipo (préstamo/seguro/inversión)/Type (loan/insurance/investment): ";
+
+    cout << "Tipo (préstamo/seguro/inversión): ";
     cin.ignore();
     getline(cin, newContract.type);
-    
-    cout << "Partes (ingrese 'fin' para terminar)/Parties (enter 'end' to end):\n";
+
+    cout << "Partes (ingrese 'fin' para terminar):\n";
     string party;
-    while(true) {
-        cout << "Nombre de la parte/ Name of the party: ";
+    while (true) {
+        cout << "Nombre de la parte: ";
         getline(cin, party);
-        if(party == "fin") break;
+        if (party == "fin") break;
         newContract.parties.insert(party);
     }
-    
-    cout << "Cláusulas (ingrese 'fin' para terminar)/Clauses (enter 'end' to end):\n";
+
+    cout << "Cláusulas (ingrese 'fin' para terminar):\n";
     string clause;
-    while(true) {
-        cout << "Cláusula/ Clause: ";
+    while (true) {
+        cout << "Cláusula: ";
         getline(cin, clause);
-        if(clause == "fin") break;
+        if (clause == "fin") break;
         newContract.clauses.push_back(clause);
     }
-    
-    // 2. Generar ID real con hashing
+
     string claveHash = "";
     for (const auto& p : newContract.parties) {
         claveHash += p + "|";
@@ -187,51 +156,48 @@ void registerContract(AVLTree& avl, HashTable& hashTable) {
     int tableSize = 101;
     int hashIndex = generateHash(claveHash, tableSize);
     newContract.id = "ID-" + to_string(hashIndex);
-    hashTable.insert(newContract);  //  Aquí se guarda el contrato completo
 
-    
-    
-    // 3. Almacenar en AVL (solo fecha e ID TEMPORAL por ahora)
+    hashTable.insert(newContract);
     avl.insert(newContract.date, newContract.id);
-    
-    // 4. Mostrar resumen (esto luego se integrará con HashTable)
+
     cout << "\n✅ Contrato registrado:\n";
     cout << "ID: " << newContract.id << endl;
-    cout << "Fecha/Date: " << newContract.date << endl;
-    cout << "Tipo/Type: " << newContract.type << endl;
-    cout << "Partes/Parties: ";
-    for(const auto& p : newContract.parties) cout << p << ", ";
-    cout << "\nCláusulas/ Clauses:" << newContract.clauses.size() << " registradas\n";
+    cout << "Fecha: " << newContract.date << endl;
+    cout << "Tipo: " << newContract.type << endl;
+    cout << "Partes: ";
+    for (const auto& p : newContract.parties) cout << p << ", ";
+    cout << "\nCláusulas: " << newContract.clauses.size() << " registradas\n";
 }
 
 void searchByDate(const AVLTree& avl) {
     string date;
-    cout << "Ingrese fecha (YYYY-MM-DD)/Enter date (YYYY-MM-DD): ";
+    cout << "Ingrese fecha (YYYY-MM-DD): ";
     cin >> date;
-    
+
     string id = avl.search(date);
-    if(id.empty()) {
-        cout << "⚠️ No hay contratos en esta fecha/ There are no contracts on this date\n";
+    if (id.empty()) {
+        cout << "⚠️ No hay contratos en esta fecha\n";
     } else {
-        cout << "\n🔍 Contrato encontrado / Contract found:\n";
-        // Esto se conectará con HashTable para mostrar todos los datos
+        cout << "\n🔍 Contrato encontrado:\n";
         cout << "ID: " << id << endl;
-        cout << "Fecha/Date: " << date << endl;
-        // ( más detalles desde HashTable)
+        cout << "Fecha: " << date << endl;
     }
 }
 
-// -------------------- Generador de Hash / Hash Generator --------------------
-
-
-
-// -------------------- Tabla Hash  / Hash Table --------------------
-
-
-
-
-
-// -------------------- Menú principal / Main menu--------------------
+void displayContractDetails(const Contract& c) {
+    cout << "\n🔎 Detalles del contrato:\n";
+    cout << "ID: " << c.id << endl;
+    cout << "Fecha: " << c.date << endl;
+    cout << "Tipo: " << c.type << endl;
+    cout << "Partes:\n";
+    for (const auto& p : c.parties) {
+        cout << "- " << p << endl;
+    }
+    cout << "Cláusulas:\n";
+    for (const auto& cl : c.clauses) {
+        cout << "• " << cl << endl;
+    }
+}
 
 void displayMenu() {
     cout << "\n📜 **Sistema de Contratos Digitales** / **Digital Contract System**\n";
@@ -240,80 +206,56 @@ void displayMenu() {
     cout << "3. Buscar por ID / Search by ID\n";
     cout << "4. Mostrar por tipo / Display by type\n";
     cout << "5. Salir / Exit\n";
-    cout << "Opción / Choice: ";
+    cout << "Opción: ";
 }
 
-void displayContractDetails(const Contract& c) {
-    cout << "\n🔎 Detalles del contrato:\n";
-    cout << "ID: " << c.id << endl;
-    cout << "Fecha: " << c.date << endl;
-    cout << "Tipo: " << c.type << endl;
+// -------------------- Función Principal --------------------
 
-    cout << "Partes:\n";
-    for (const auto& p : c.parties) {
-        cout << "- " << p << endl;
-    }
-
-    cout << "Cláusulas:\n";
-    for (const auto& cl : c.clauses) {
-        cout << "• " << cl << endl;
-    }
-}
-
-
-// -------------------- Función Principal/ Main Function--------------------
 int main() {
     AVLTree contractsByDate;
-    HashTable hashTable;    
+    HashTable hashTable;
     int option;
-    
 
     do {
         displayMenu();
         cin >> option;
 
-        switch(option) {
-    case 1:
-        registerContract(contractsByDate, hashTable);
-        break;
-
-    case 2:
-        searchByDate(contractsByDate);
-        break;
-
-    case 3: {
-        string id;
-        cout << "Ingrese el ID del contrato: ";
-        cin >> id;
-        Contract* c = hashTable.search(id);
-        if (c != nullptr) {
-            displayContractDetails(*c);
-            delete c;
-        } else {
-            cout << "⚠️ Contrato no encontrado.\n";
+        switch (option) {
+            case 1:
+                registerContract(contractsByDate, hashTable);
+                break;
+            case 2:
+                searchByDate(contractsByDate);
+                break;
+            case 3: {
+                string id;
+                cout << "Ingrese el ID del contrato: ";
+                cin >> id;
+                Contract* c = hashTable.search(id);
+                if (c != nullptr) {
+                    displayContractDetails(*c);
+                    delete c;
+                } else {
+                    cout << "⚠️ Contrato no encontrado.\n";
+                }
+                break;
+            }
+            case 4: {
+                string tipo;
+                cin.ignore();
+                cout << "Ingrese el tipo de contrato (préstamo / seguro / inversión): ";
+                getline(cin, tipo);
+                hashTable.displayByType(tipo);
+                break;
+            }
+            case 5:
+                cout << "Saliendo del sistema. ¡Hasta luego!\n";
+                break;
+            default:
+                cout << "Opción inválida / Invalid option\n";
         }
-        break;
-    }
 
-    case 4: {
-        string tipo;
-        cout << "Ingrese el tipo de contrato (préstamo / seguro / inversión): ";
-        cin.ignore();
-        getline(cin, tipo);
-        hashTable.displayByType(tipo);
-        break;
-    }
-
-    case 5:
-        cout << "Saliendo del sistema. ¡Hasta luego!\n";
-        break;
-
-    default:
-        cout << "Opción inválida / Invalid option\n";
-}
-
-        }
-    } while(option != 3);
+    } while (option != 5);
 
     return 0;
 }
