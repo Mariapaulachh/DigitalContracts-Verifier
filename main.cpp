@@ -124,7 +124,7 @@ Contract captureContractData() {
 
 
     cout << "Tipo (préstamo/seguro/inversión): ";
-    cin.ignore();
+    
     getline(cin, newContract.type);
     newContract.type = normalizarTexto(newContract.type);
 
@@ -322,11 +322,13 @@ string toBase36(unsigned int num) {
 }
 
 string generateUniqueId(const Contract& c, int tableSize = 101) {
+    string tipo = normalizarTexto(c.type);
     string prefix;
-    if (c.type == "PRESTAMO")      prefix = "PRE-";
-    else if (c.type == "SEGURO")   prefix = "SEG-";
-    else if (c.type == "INVERSION")prefix = "INV-";
-    else                           prefix = "GEN-";
+    if (tipo == "PRESTAMO")      prefix = "PRE-";
+    else if (tipo == "SEGURO")   prefix = "SEG-";
+    else if (tipo == "INVERSION")prefix = "INV-";
+    else                         prefix = "GEN-";
+
 
 
     string clave = "";
