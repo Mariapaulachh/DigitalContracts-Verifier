@@ -7,11 +7,10 @@
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
+#include <iostream>
 #include <vector>
 #include <string>
-#include "HashGenerator.cpp" // Para usar generateHash()
-#include "main.cpp" // Solo si Contract está definido ahí. Idealmente usar un .h
-
+#include "HashGenerator.cpp" // para usar generateHash()
 using namespace std;
 
 // Nodo genérico para la lista
@@ -23,17 +22,11 @@ private:
 public:
     Node(const T& d) : data(d), next(nullptr) {}
 
-    void setNext(Node<T>* n) {
-        next = n;
-    }
+    void setNext(Node<T>* n) { next = n; }
 
-    Node<T>* getNext() const {
-        return next;
-    }
+    Node<T>* getNext() const { return next; }
 
-    T getData() const {
-        return data;
-    }
+    T getData() const { return data; }
 
     string to_string() const {
         return "[Contrato ID: " + data.id + "]";
@@ -53,18 +46,17 @@ public:
         Node<T>* nuevo = new Node<T>(val);
         nuevo->setNext(head);
         head = nuevo;
-        return 1; // insertado
+        return 1;
     }
 
     T* search(const string& id) const {
         Node<T>* temp = head;
         while (temp != nullptr) {
-            if (temp->getData().id == id) {
-                return new T(temp->getData()); // copia del contrato
-            }
+            if (temp->getData().id == id)
+                return new T(temp->getData());
             temp = temp->getNext();
         }
-        return nullptr; // no encontrado
+        return nullptr;
     }
 
     int remove(const string& id) {
@@ -72,18 +64,17 @@ public:
         Node<T>* prev = nullptr;
         while (temp != nullptr) {
             if (temp->getData().id == id) {
-                if (prev != nullptr) {
+                if (prev != nullptr)
                     prev->setNext(temp->getNext());
-                } else {
+                else
                     head = temp->getNext();
-                }
                 delete temp;
-                return 1; // eliminado
+                return 1;
             }
             prev = temp;
             temp = temp->getNext();
         }
-        return 0; // no encontrado
+        return 0;
     }
 
     void print() const {
@@ -94,6 +85,8 @@ public:
         }
         cout << "NULL" << endl;
     }
+
+    Node<T>* getHead() const { return head; } // requerido por displayByType
 };
 
 // Clase HashTable que usa encadenamiento separado
@@ -110,9 +103,8 @@ public:
 
     int insert(const Contract& c) {
         string clave = "";
-        for (auto it = c.parties.begin(); it != c.parties.end(); ++it) {
+        for (auto it = c.parties.begin(); it != c.parties.end(); ++it)
             clave += *it + "|";
-        }
         clave += c.date + "|" + c.type;
 
         int pos = generateHash(clave, tableSize);
@@ -120,14 +112,13 @@ public:
     }
 
     Contract* search(const string& id) const {
-        // Extraer hash index directamente desde el ID
-        if (id.substr(0,3) != "ID-") return nullptr;
+        if (id.substr(0, 3) != "ID-") return nullptr;
         int pos = stoi(id.substr(3)) % tableSize;
         return table[pos].search(id);
     }
 
     int remove(const string& id) {
-        if (id.substr(0,3) != "ID-") return 0;
+        if (id.substr(0, 3) != "ID-") return 0;
         int pos = stoi(id.substr(3)) % tableSize;
         return table[pos].remove(id);
     }
@@ -136,6 +127,25 @@ public:
         for (int i = 0; i < tableSize; i++) {
             cout << "[" << i << "] ";
             table[i].print();
+        }
+    }
+
+    void displayByType(const string& tipo) const {
+        for (int i = 0; i < tableSize; i++) {
+            Node<Contract>* temp = table[i].getHead();
+            while (temp != nullptr) {
+                if (temp->getData().type == tipo) {
+                    Contract c = temp->getData();
+                    cout << "\nContrato ID: " << c.id << "\n";
+                    cout << "Fecha: " << c.date << "\n";
+                    cout << "Partes: ";
+                    for (auto p : c.parties) cout << p << ", ";
+                    cout << "\nCláusulas:\n";
+                    for (auto cl : c.clauses) cout << "- " << cl << "\n";
+                    cout << "---------------------------\n";
+                }
+                temp = temp->getNext();
+            }
         }
     }
 };
