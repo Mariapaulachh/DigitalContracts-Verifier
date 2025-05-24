@@ -1,7 +1,6 @@
 // =====================================================================
 // HashTable.h
 // Tabla Hash con Encadenamiento Separado para almacenar contratos
-// Proyecto de Algoritmos - Daniel Felipe Mosquera y María Paula Chaparro
 // =====================================================================
 
 #ifndef HASHTABLE_H
@@ -10,10 +9,18 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "HashGenerator.cpp" // para usar generateHash()
+#include <set>
 using namespace std;
 
-// Nodo genérico para la lista
+struct Contract {
+    string id;
+    string date;
+    string type;
+    set<string> parties;
+    vector<string> clauses;
+};
+
+// -------------------- Nodo de lista --------------------
 template <typename T>
 class Node {
 private:
@@ -23,17 +30,15 @@ public:
     Node(const T& d) : data(d), next(nullptr) {}
 
     void setNext(Node<T>* n) { next = n; }
-
     Node<T>* getNext() const { return next; }
-
     T getData() const { return data; }
 
     string to_string() const {
-        return "[Contrato ID: " + data.id + "]";
+        return "[ID: " + data.id + "]";
     }
 };
 
-// Lista genérica con inserción al frente
+// -------------------- Lista simple --------------------
 template <typename T>
 class Lista {
 private:
@@ -42,7 +47,6 @@ public:
     Lista() : head(nullptr) {}
 
     int insert(const T& val) {
-        if (search(val.id) != nullptr) return 0; // ya existe
         Node<T>* nuevo = new Node<T>(val);
         nuevo->setNext(head);
         head = nuevo;
@@ -52,8 +56,9 @@ public:
     T* search(const string& id) const {
         Node<T>* temp = head;
         while (temp != nullptr) {
-            if (temp->getData().id == id)
+            if (temp->getData().id == id) {
                 return new T(temp->getData());
+            }
             temp = temp->getNext();
         }
         return nullptr;
@@ -64,10 +69,11 @@ public:
         Node<T>* prev = nullptr;
         while (temp != nullptr) {
             if (temp->getData().id == id) {
-                if (prev != nullptr)
+                if (prev != nullptr) {
                     prev->setNext(temp->getNext());
-                else
+                } else {
                     head = temp->getNext();
+                }
                 delete temp;
                 return 1;
             }
@@ -86,10 +92,10 @@ public:
         cout << "NULL" << endl;
     }
 
-    Node<T>* getHead() const { return head; } // requerido por displayByType
+    Node<T>* getHead() const { return head; }
 };
 
-// Clase HashTable que usa encadenamiento separado
+// -------------------- HashTable --------------------
 class HashTable {
 private:
     vector<Lista<Contract>> table;
@@ -103,10 +109,10 @@ public:
 
     int insert(const Contract& c) {
         string clave = "";
-        for (auto it = c.parties.begin(); it != c.parties.end(); ++it)
-            clave += *it + "|";
+        for (const auto& p : c.parties) {
+            clave += p + "|";
+        }
         clave += c.date + "|" + c.type;
-
         int pos = generateHash(clave, tableSize);
         return table[pos].insert(c);
     }
@@ -117,31 +123,18 @@ public:
         return table[pos].search(id);
     }
 
-    int remove(const string& id) {
-        if (id.substr(0, 3) != "ID-") return 0;
-        int pos = stoi(id.substr(3)) % tableSize;
-        return table[pos].remove(id);
-    }
-
-    void printTable() const {
-        for (int i = 0; i < tableSize; i++) {
-            cout << "[" << i << "] ";
-            table[i].print();
-        }
-    }
-
     void displayByType(const string& tipo) const {
         for (int i = 0; i < tableSize; i++) {
             Node<Contract>* temp = table[i].getHead();
             while (temp != nullptr) {
                 if (temp->getData().type == tipo) {
                     Contract c = temp->getData();
-                    cout << "\nContrato ID: " << c.id << "\n";
+                    cout << "\n🧾 Contrato ID: " << c.id << "\n";
                     cout << "Fecha: " << c.date << "\n";
                     cout << "Partes: ";
-                    for (auto p : c.parties) cout << p << ", ";
+                    for (const auto& p : c.parties) cout << p << ", ";
                     cout << "\nCláusulas:\n";
-                    for (auto cl : c.clauses) cout << "- " << cl << "\n";
+                    for (const auto& cl : c.clauses) cout << "- " << cl << "\n";
                     cout << "---------------------------\n";
                 }
                 temp = temp->getNext();
