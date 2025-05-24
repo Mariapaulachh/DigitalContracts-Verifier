@@ -369,8 +369,7 @@ void displayMenu() {
     cout << "1. Registrar contrato / Register contract.\n";
     cout << "2. Buscar por fecha / Search by date.\n";
     cout << "3. Buscar por ID / Search by ID.\n";
-    cout << "4. Mostrar por tipo / Display by type.\n";
-    cout << "5. Salir / Exit.\n";
+    cout << "4. Salir / Exit.\n";
     cout << "Opción / Choice: ";
 }
 // ---------------------------------------------------------------------
@@ -411,20 +410,13 @@ int main() {
                         }
                             break;
                     }
-            case 4: {
-                            string type;
-                            cout << "\n📂 Mostrar por tipo de contrato (préstamo/seguro/inversión)/ Display by contract type (loan/insurance/investment): ";
-                            getline(cin, type);
-                            hashTable.displayByType(type);
-                            break;
-                        }
-                        case 5:
-                            cout << "\n👋 Hasta luego/See you later.\n";
-                            break;
-                        default:
-                            cout << "Opción inválida/Invalid option.\n";
-                    }
-                } while (option != 5);
+            case 4:
+                cout << "\n👋 Hasta luego/See you later.\n";
+                break;
+            default:
+                cout << "Opción inválida/Invalid option.\n";
+        }
+    } while (option != 4);
 
-                return 0;
-            }
+    return 0;
+}
