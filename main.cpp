@@ -147,6 +147,7 @@ void registerContract(AVLTree& avl, HashTable& hashTable) {
         newContract.clauses.push_back(clause);
     }
 
+    // Generar ID con hashing completo
     string claveHash = "";
     for (const auto& p : newContract.parties) {
         claveHash += p + "|";
@@ -157,9 +158,11 @@ void registerContract(AVLTree& avl, HashTable& hashTable) {
     int hashIndex = generateHash(claveHash, tableSize);
     newContract.id = "ID-" + to_string(hashIndex);
 
+    // Insertar en estructuras
     hashTable.insert(newContract);
     avl.insert(newContract.date, newContract.id);
 
+    // Mostrar resumen
     cout << "\n✅ Contrato registrado:\n";
     cout << "ID: " << newContract.id << endl;
     cout << "Fecha: " << newContract.date << endl;
