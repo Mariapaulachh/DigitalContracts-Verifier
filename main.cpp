@@ -19,6 +19,8 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include "HashGenerator.cpp" 
+
 using namespace std;
 
 // -------------------- Clase AvlTree/Class AVLTree --------------------
@@ -174,8 +176,17 @@ void registerContract(AVLTree& avl) {
         newContract.clauses.push_back(clause);
     }
     
-    // 2. Generar ID provisional (reemplazar con el hash)
-    newContract.id = generateTempId(newContract.date, newContract.type, newContract.parties);
+    // 2. Generar ID real con hashing
+    string claveHash = "";
+    for (const auto& p : newContract.parties) {
+        claveHash += p + "|";
+    }
+    claveHash += newContract.date + "|" + newContract.type;
+
+    int tableSize = 101;
+    int hashIndex = generateHash(claveHash, tableSize);
+    newContract.id = "ID-" + to_string(hashIndex);
+    
     
     // 3. Almacenar en AVL (solo fecha e ID TEMPORAL por ahora)
     avl.insert(newContract.date, newContract.id);
