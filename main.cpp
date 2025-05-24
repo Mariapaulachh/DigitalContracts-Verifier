@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+
 //#include "HashTable.h"
 //#include "HashGenerator.cpp"
 
@@ -100,25 +101,43 @@ public:
 };
 // ---------------------------------------------------------------------
 
+
+string normalizarTexto(string input); // declaración anticipada
+bool esFechaValida(string& fecha);  // sin const
+ // delcaracion anticipada
+
+
+
 // ------- Captura de datos del contrato/Capture contract data ----------
 Contract captureContractData() {
     Contract newContract;
 
     cout << "\n--- Registrar contrato / Register contract---\n";
-    cout << "Fecha (YYYY-MM-DD): ";
-    cin >> newContract.date;
+    do {
+        cout << "Fecha (YYYY-MM-DD o YYYY/MM/DD): ";
+            getline(cin, newContract.date);
+            if (!esFechaValida(newContract.date)) {
+                cout << "⚠️ Formato inválido. Intente de nuevo (YYYY-MM-DD o YYYY/MM/DD).\n";
+            }
+    } while (!esFechaValida(newContract.date));
+
+
 
     cout << "Tipo (préstamo/seguro/inversión): ";
     cin.ignore();
     getline(cin, newContract.type);
+    newContract.type = normalizarTexto(newContract.type);
+
 
     cout << "Partes (ingrese 'fin' para terminar):\n";
     string party;
     while (true) {
         cout << "Nombre de la parte: ";
         getline(cin, party);
-        if (party == "fin") break;
-        newContract.parties.insert(party);
+        string partyCheck = normalizarTexto(party);
+        if (partyCheck == "FIN") break;
+        newContract.parties.insert(partyCheck);
+
     }
 
     cout << "Cláusulas (ingrese 'fin' para terminar):\n";
@@ -126,12 +145,52 @@ Contract captureContractData() {
     while (true) {
         cout << "Cláusula: ";
         getline(cin, clause);
-        if (clause == "fin") break;
-        newContract.clauses.push_back(clause);
+        string clauseCheck = normalizarTexto(clause);
+        if (clauseCheck == "FIN") break;
+        newContract.clauses.push_back(clauseCheck);
     }
     return newContract;
 }
 // ---------------------------------------------------------------------
+
+
+string normalizarTexto(string input) {
+    // 1. Eliminar espacios al inicio y final
+    size_t start = input.find_first_not_of(" \t\n\r");
+    size_t end = input.find_last_not_of(" \t\n\r");
+    if (start == string::npos) return "";
+    input = input.substr(start, end - start + 1);
+
+    // 2. Reemplazar tildes y convertir a mayúsculas (sin switch)
+    string resultado = "";
+    for (size_t i = 0; i < input.length(); ++i) {
+        unsigned char c = input[i];
+        // Detección de multibyte de tilde
+        if (c == 195 && i + 1 < input.length()) {
+            unsigned char next = input[i + 1];
+            if (next == 161) resultado += 'A'; // á
+            else if (next == 169) resultado += 'E'; // é
+            else if (next == 173) resultado += 'I'; // í
+            else if (next == 179) resultado += 'O'; // ó
+            else if (next == 186) resultado += 'U'; // ú
+            else if (next == 177) resultado += 'N'; // ñ
+            else resultado += '?'; // caracter raro
+            i++; // saltar el segundo byte
+        } else {
+            resultado += toupper(c);
+        }
+    }
+
+    return resultado;
+}
+
+
+
+
+
+
+
+
 
 // -------------------- Clase AvlTree/Class AVLTree --------------------
 class AVLTree {
@@ -252,6 +311,42 @@ unsigned int generateHash(const string& key, int tableSize) {
 }
 // ---------------------------------------------------------------------
 
+string toBase36(unsigned int num) {
+    const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    string result = "";
+    do {
+        result = chars[num % 36] + result;
+        num /= 36;
+    } while (num > 0);
+    return result;
+}
+
+string generateUniqueId(const Contract& c, int tableSize = 101) {
+    string prefix;
+    if (c.type == "PRESTAMO")      prefix = "PRE-";
+    else if (c.type == "SEGURO")   prefix = "SEG-";
+    else if (c.type == "INVERSION")prefix = "INV-";
+    else                           prefix = "GEN-";
+
+
+    string clave = "";
+    for (const auto& p : c.parties)    clave += p + "|";
+    clave += c.date + "|" + c.type + "|";
+    for (const auto& cl : c.clauses)   clave += cl + "|";
+
+    unsigned int hashValue = 0;
+    for (char ch : clave) {
+        hashValue = 37 * hashValue + ch;
+    }
+
+    string encoded = toBase36(hashValue % tableSize);
+    return prefix + encoded;
+}
+
+
+
+
+
 // -------------------- Clase HashTable/ Class HashTable ---------------
 // HashGenerator.cpp 
 class HashTable {
@@ -300,6 +395,42 @@ public:
 };
 // ---------------------------------------------------------------------
 
+bool esFechaValida(string& fecha) {
+    // Eliminar espacios alrededor
+    size_t start = fecha.find_first_not_of(" \t\n\r");
+    size_t end = fecha.find_last_not_of(" \t\n\r");
+    if (start == string::npos) return false;
+    fecha = fecha.substr(start, end - start + 1);
+
+    // Reemplazar / por - si es necesario
+    for (char& ch : fecha) {
+        if (ch == '/') ch = '-';
+    }
+
+    // Validar formato YYYY-MM-DD
+    if (fecha.length() != 10) return false;
+    if (fecha[4] != '-' || fecha[7] != '-') return false;
+
+    string anio = fecha.substr(0, 4);
+    string mes  = fecha.substr(5, 2);
+    string dia  = fecha.substr(8, 2);
+
+    for (char c : anio + mes + dia) {
+        if (!isdigit(c)) return false;
+    }
+
+    int m = stoi(mes);
+    int d = stoi(dia);
+
+    if (m < 1 || m > 12) return false;
+    if (d < 1 || d > 31) return false;
+
+    return true;
+}
+
+
+
+
 // ---------- Registro de contrato AVL/Resgister contract AVL ----------
 
 void registerContract(AVLTree& avl, HashTable& hashTable) {
@@ -308,7 +439,7 @@ void registerContract(AVLTree& avl, HashTable& hashTable) {
     string clave = "";
     for (const auto& p : newContract.parties) clave += p + "|";
     clave += newContract.date + "|" + newContract.type;
-    newContract.id = "ID-" + to_string(generateHash(clave, 101));
+    newContract.id = generateUniqueId(newContract);
     cout << "\n🔑 ID generado: " << newContract.id << "\n";
 
     avl.insert(newContract.date, newContract.id);
@@ -389,7 +520,8 @@ int main() {
     do {
         displayMenu();
         cin >> option;
-
+        cin.ignore();
+        
         switch(option) {
             case 1: 
                 registerContract(avl, hashTable); 
