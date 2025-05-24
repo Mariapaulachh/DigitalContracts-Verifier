@@ -131,7 +131,7 @@ struct Contract {
     vector<string> clauses; // Cláusulas / Contract clauses. MP Chaparro, DF Mosquera.
 };
 
-//  Funciones AVL/ AVL Functions
+// Funciones AVL / AVL Functions. MP Chaparro, DF Mosquera.
 string generateTempId(const string& date, const string& type, const set<string>& parties); // Provisional
 void registerContract(AVLTree& avl);
 void searchByDate(const AVLTree& avl);
@@ -146,7 +146,7 @@ string generateTempId(const string& date, const string& type, const set<string>&
 void registerContract(AVLTree& avl) {
     Contract newContract;
     
-    // 1. Capturar todos los datos/Capture all data
+    // 1. Capturar todos los datos/Capture all data. MP Chaparro, DF Mosquera.
     
     cout << "\n--- Registrar contrato / Register contract---\n";
     cout << "Fecha (YYYY-MM-DD)/ Enter date (YYYY-MM-DD): ";
