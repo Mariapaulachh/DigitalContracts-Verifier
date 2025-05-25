@@ -18,8 +18,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
-//#include "HashTable.h"
-//#include "HashGenerator.cpp"
+
 
 using namespace std;
 
@@ -29,6 +28,7 @@ struct Contract {
     string id;          // ID único / Unique ID. MP Chaparro, DF Mosquera.
     string date;        // Fecha de creación (YYYY-MM-DD) / Creation date. MP Chaparro, DF Mosquera.
     string type;        // Tipo: "préstamo", "seguro", "inversión" / Type: "loan", "insurance", "investment". MP Chaparro, DF Mosquera.
+    string normalizedType; // Tipo normalizado bilingue / Normalized bilingual type. MP Chaparro, DF Mosquera.
     set<string> parties; // Partes involucradas / Involved parties. MP Chaparro, DF Mosquera.
     vector<string> clauses; // Cláusulas / Contract clauses. MP Chaparro, DF Mosquera.
 };
@@ -104,47 +104,8 @@ public:
 // ------- Funciones de validación / Validation functions --------------
 string normalizeText(string input); 
 bool isValidDate(string& date);bool isValidDate(string& date);
-// ---------------------------------------------------------------------
+string normalizeForSearch(const string& input);
 
-// ------- Captura de datos del contrato/Capture contract data ----------
-Contract captureContractData() {
-    Contract newContract;
-
-    cout << "\n--- Registrar contrato / Register contract---\n";
-
-    do {
-        cout << "Fecha (AAAA-MM-DD)/ Date (YYYY-MM-DD) : ";
-        getline(cin, newContract.date);
-        if (!isValidDate(newContract.date)) {
-            cout << "⚠️ Formato inválido. Intente de nuevo/Invalid format. Please try again.\n";
-        }
-    } while (!isValidDate(newContract.date));
-
-    cout << "Tipo (préstamo/seguro/inversión)/ Type (loan/insurance/investment)/: ";
-    getline(cin, newContract.type);
-    newContract.type = normalizeText(newContract.type);
-
-    cout << "Partes (ingrese 'fin' para terminar)/Parties (enter 'end' to finish):\n";
-    string party;
-    while (true) {
-        cout << "Nombre de la parte/ Name of the party:";
-        getline(cin, party);
-        string partyCheck = normalizeText(party);
-        if (partyCheck == "FIN" || partyCheck == "END") break;
-        newContract.parties.insert(partyCheck);
-    }
-
-    cout << "Cláusulas (ingrese 'fin' para terminar)/ Clauses (enter 'end' to finish):\n";
-    string clause;
-    while (true) {
-        cout << "Cláusula/ Clause: ";
-        getline(cin, clause);
-        string clauseCheck = normalizeText(clause);
-        if (clauseCheck == "FIN" || clauseCheck == "END") break;
-        newContract.clauses.push_back(clauseCheck);
-    }
-    return newContract;
-}
 // ---------------------------------------------------------------------
 
 // ---------------------------------------------------------------------
@@ -222,6 +183,76 @@ bool isValidDate(string& date) {
     return true;
 }
 // ---------------------------------------------------------------------
+
+// --------- Normalización para búsqueda/ Normalize for search ---------
+string normalizeForSearch(const string& input) {
+    string normalized = normalizeText(input);
+
+    // Mapeo de sinónimos (solo para búsqueda)
+    if (normalized == "PRESTAMO") return "LOAN";
+    if (normalized == "LOAN") return "PRESTAMO";
+    if (normalized == "SEGURO") return "INSURANCE";
+    if (normalized == "INSURANCE") return "SEGURO";
+    if (normalized == "INVERSION") return "INVESTMENT";
+    if (normalized == "INVESTMENT") return "INVERSION";
+
+    return normalized;
+}
+// ---------------------------------------------------------------------
+
+// ------- Captura de datos del contrato/Capture contract data ----------
+Contract captureContractData() {
+    Contract newContract;
+
+    cout << "\n--- Registrar contrato / Register contract---\n";
+
+    do {
+        cout << "Fecha (AAAA-MM-DD)/ Date (YYYY-MM-DD) : ";
+        getline(cin, newContract.date);
+        if (!isValidDate(newContract.date)) {
+            cout << "⚠️ Formato inválido. Intente de nuevo/Invalid format. Please try again.\n";
+        }
+    } while (!isValidDate(newContract.date));
+
+    cout << "Tipo (préstamo/seguro/inversión)/ Type (loan/insurance/investment)/: ";
+    getline(cin, newContract.type); // Guardamos el texto original (sin normalizar aún)
+
+    // Mantener el tipo original para mostrar, pero validar con normalizado
+    string normalizedType = normalizeText(newContract.type);
+    if (!(normalizedType == "PRESTAMO" || normalizedType == "LOAN" || 
+          normalizedType == "SEGURO" || normalizedType == "INSURANCE" ||
+          normalizedType == "INVERSION" || normalizedType == "INVESTMENT")) {
+        cout << "⚠️ Tipo inválido. Usando 'GENERAL' como predeterminado.\n";
+        newContract.type = "GENERAL";
+    }
+
+    cout << "Partes (ingrese 'fin' para terminar)/Parties (enter 'end' to finish):\n";
+    string party;
+    while (true) {
+        cout << "Nombre de la parte/ Name of the party:";
+        getline(cin, party);
+        string partyCheck = normalizeText(party);
+        if (partyCheck == "FIN" || partyCheck == "END") break;
+        newContract.parties.insert(partyCheck);
+    }
+
+    cout << "Cláusulas (ingrese 'fin' para terminar)/ Clauses (enter 'end' to finish):\n";
+    string clause;
+    while (true) {
+        cout << "Cláusula/ Clause: ";
+        getline(cin, clause);
+        string clauseCheck = normalizeText(clause);
+        if (clauseCheck == "FIN" || clauseCheck == "END") break;
+        newContract.clauses.push_back(clauseCheck);
+    }
+
+    newContract.normalizedType = normalizeText(newContract.type);
+    return newContract;
+
+}
+// ---------------------------------------------------------------------
+
+
 
 // -------------------- Clase AvlTree/Class AVLTree --------------------
 class AVLTree {
@@ -352,7 +383,7 @@ string toBase62(unsigned long long num) {
 }
 
 unsigned long long djb2Hash(const string& str) {
-    unsigned long long hash = 5381; // Semilla inicial / Initial seed
+    unsigned long long hash = 5381;
     for (char c : str) {
         hash = ((hash << 5) + hash) + c; // hash * 33 + c
     }
@@ -363,7 +394,7 @@ string generateContractFingerprint(const Contract& c) {
     string data;
     data.reserve(256); // 
 
-    data += c.date + "|" + c.type + "|";
+    data += c.date + "|" + c.normalizedType + "|";
     for (const auto& p : c.parties) data += p + "|";
     for (const auto& cl : c.clauses) data += cl + "|";
 
@@ -379,17 +410,21 @@ string generateContractFingerprint(const Contract& c) {
 
 string generateUniqueId(const Contract& c) {
     string prefix;
-    if (c.type == "PRESTAMO")      prefix = "PRE-";
-    else if (c.type == "SEGURO")   prefix = "SEG-";
-    else if (c.type == "INVERSION")prefix = "INV-";
-    else                           prefix = "GEN-";
+    string typeNormalized = c.normalizedType;
 
-    return prefix + generateContractFingerprint(c);
+    if (typeNormalized == "PRESTAMO" || typeNormalized == "LOAN") prefix = "PRE-";
+    else if (typeNormalized == "SEGURO" || typeNormalized == "INSURANCE") prefix = "SEG-";
+    else if (typeNormalized == "INVERSION" || typeNormalized == "INVESTMENT") prefix = "INV-";
+    else prefix = "GEN-";
+
+    string fingerprint = generateContractFingerprint(c);
+    fingerprint.erase(remove_if(fingerprint.begin(), fingerprint.end(), ::isspace), fingerprint.end());
+
+    return prefix + fingerprint;
 }
+    
 // ---------------------------------------------------------------------
 
-// -------------------- Clase HashTable/ Class HashTable ---------------
-// HashGenerator.cpp 
 class HashTable {
 private:
     vector<Lista<Contract>> table;
@@ -401,18 +436,14 @@ public:
         table.resize(tableSize);
     }
 
-    int insert(const Contract& c) {
-        int pos = generateHash(c.id, tableSize); 
-        return table[pos].insert(c);
-    }
-
+    // Método search que falta
     Contract* search(const string& id) const {
-        // --- Cambio clave: Eliminar la validación del prefijo "ID-" ---
-        int pos = generateHash(id, tableSize); // Usar el hash del ID completo
+        unsigned long long hash = djb2Hash(id);
+        int pos = hash % tableSize;
         return table[pos].search(id);
     }
 
-    void displayByType(const string& type) const {
+    void displayByType(const string& type) {
         for (int i = 0; i < tableSize; i++) {
             Node<Contract>* temp = table[i].getHead();
             while (temp != nullptr) {
@@ -422,13 +453,19 @@ public:
                     cout << "Fecha / Date: " << c.date << "\n";
                     cout << "Partes / Parties: ";
                     for (const auto& p : c.parties) cout << p << ", ";
-                    cout << "\nCláusulas/ Clauses:\n";
+                    cout << "\nCláusulas/ Clauses:\n"; 
                     for (const auto& cl : c.clauses) cout << "- " << cl << "\n";
                     cout << "---------------------------\n";
                 }
                 temp = temp->getNext();
             }
         }
+    }
+
+    int insert(const Contract& c) {
+        unsigned long long hash = djb2Hash(c.id); 
+        int pos = hash % tableSize;
+        return table[pos].insert(c);
     }
 };
 // ---------------------------------------------------------------------
@@ -481,23 +518,23 @@ public:
 void registerContract(AVLTree& avl, HashTable& ht, MultiList& ml);
 void searchByDate(const AVLTree& avl, const HashTable& hashTable);
 void displayContractDetails(const Contract& c);
+
 void displayMenu();
 // ---------------------------------------------------------------------
 // ---------- Registro de contrato AVL/Resgister contract AVL ----------
-void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml ) {
+void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml) {
     Contract newContract = captureContractData();
 
-    string clave = "";
-    for (const auto& p : newContract.parties) clave += p + "|";
-    clave += newContract.date + "|" + newContract.type;
-    newContract.id = generateUniqueId(newContract); 
-    cout << "\n🔑 ID generado/ ID generated: " << newContract.id << "\n";
+    string normalizedType = normalizeText(newContract.type);
+    newContract.id = generateUniqueId(newContract); // Internamente usa normalizedType
+
+    cout << "\n🔑 ID generado: " << newContract.id << "\n";
 
     avl.insert(newContract.date, newContract.id);
-    hashTable.insert(newContract); // Aquí se guarda el contrato completo
-     ml.addContract(newContract.type, newContract.id); 
+    hashTable.insert(newContract);
+    ml.addContract(normalizedType, newContract.id); // Usa el tipo normalizado
 
-    cout << "\n✅ Contrato registrado correctamente/Contract successfully registered:\n";
+    cout << "\n✅ Contrato registrado correctamente.\n";
 }
 // ---------------------------------------------------------------------
 
@@ -536,19 +573,49 @@ void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml ) {
 //-------- Mostrar contratos por tipo / Show contracts by type ---------
 void showContractsByType(const MultiList& ml, const HashTable& hashTable) {
     string type;
-    cout << "Tipo (préstamo/seguro/inversión): ";
-    cin >> type;
-    type = normalizeText(type);  // ← ÚNICO CAMBIO: Normalizamos el input
+    cout << "Tipo-Type (préstamo-loan / seguro-insurance / inversión-investment) : ";
+    getline(cin, type);
 
-    vector<string> ids = ml.getContractsByType(type);
-    if (ids.empty()) {
-        cout << "⚠️ No hay contratos de tipo " << type << "\n";
+    // Normalización para búsqueda bilingüe
+    string normalizedInput = normalizeText(type);
+    string searchTerm = normalizeForSearch(normalizedInput);
+
+    // Obtener IDs de ambos términos (inglés/español)
+    vector<string> ids = ml.getContractsByType(normalizedInput);
+    vector<string> altIds = ml.getContractsByType(searchTerm);
+
+    // Combinar resultados evitando duplicados
+    vector<string> allIds;
+    allIds.reserve(ids.size() + altIds.size());
+
+    // Insertar primeros IDs
+    allIds.insert(allIds.end(), ids.begin(), ids.end());
+
+    // Insertar IDs alternativos si no están ya presentes
+    for (const auto& id : altIds) {
+        if (find(allIds.begin(), allIds.end(), id) == allIds.end()) {
+            allIds.push_back(id);
+        }
+    }
+
+    // Mostrar resultados
+    if (allIds.empty()) {
+        cout << "⚠️ No hay contratos de tipo/There are no contracts of type " << type << "\n";
     } else {
-        cout << "📋 Contratos de tipo " << type << ":\n";
-        for (const string& id : ids) {
+        cout << "📋 Contratos de tipo/Contracts of type '" << type << "' [";
+        if (normalizedInput != searchTerm) {
+            cout << normalizedInput << "/" << searchTerm;
+        } else {
+            cout << normalizedInput;
+        }
+        cout << "]:\n";
+
+        for (const string& id : allIds) {
             Contract* c = hashTable.search(id);
-            if (c) displayContractDetails(*c);
-            delete c;
+            if (c) {
+                displayContractDetails(*c);
+                delete c;
+            }
         }
     }
 }
@@ -590,6 +657,7 @@ int main() {
     do {
         displayMenu();
         cin >> option;
+        cin.ignore(); 
 
         switch(option) {
             case 1: 
@@ -601,14 +669,17 @@ int main() {
             case 3: {
                 string id;
                 cout << "\n🔎 Buscar por ID / Search by ID: ";
-                cin.ignore();  
                 getline(cin, id);
+
+                // Eliminar TODOS los espacios (incluidos internos)
+                id.erase(remove_if(id.begin(), id.end(), ::isspace), id.end());
+
                 Contract* c = hashTable.search(id);
                 if (c) {
                     displayContractDetails(*c);
                     delete c;
                 } else {
-                cout << "⚠️ Contrato no encontrado/Contract not found\n";
+                    cout << "⚠️ Contrato no encontrado/Contract not found (ID: " << id << ")\n";
                 }
                 break;
             }
