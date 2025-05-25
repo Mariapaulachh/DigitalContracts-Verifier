@@ -18,11 +18,11 @@
 #include <set>
 #include <vector>
 #include <algorithm>
-
 //#include "HashTable.h"
 //#include "HashGenerator.cpp"
 
 using namespace std;
+
 
 // ---------- Estructura de un contrato / Contract structure -----------
 struct Contract {
@@ -33,7 +33,6 @@ struct Contract {
     vector<string> clauses; // Cláusulas / Contract clauses. MP Chaparro, DF Mosquera.
 };
 // ---------------------------------------------------------------------d
-
 // ------------ Lista enlazada simple / Singly linked list  -------------
 template <typename T>
 class Node {
@@ -101,96 +100,128 @@ public:
 };
 // ---------------------------------------------------------------------
 
-
-string normalizarTexto(string input); // declaración anticipada
-bool esFechaValida(string& fecha);  // sin const
- // delcaracion anticipada
-
-
+// ---------------------------------------------------------------------
+// ------- Funciones de validación / Validation functions --------------
+string normalizeText(string input); 
+bool isValidDate(string& date);bool isValidDate(string& date);
+// ---------------------------------------------------------------------
 
 // ------- Captura de datos del contrato/Capture contract data ----------
 Contract captureContractData() {
     Contract newContract;
 
     cout << "\n--- Registrar contrato / Register contract---\n";
+
     do {
-        cout << "Fecha (YYYY-MM-DD o YYYY/MM/DD): ";
-            getline(cin, newContract.date);
-            if (!esFechaValida(newContract.date)) {
-                cout << "⚠️ Formato inválido. Intente de nuevo (YYYY-MM-DD o YYYY/MM/DD).\n";
-            }
-    } while (!esFechaValida(newContract.date));
+        cout << "Fecha (AAAA-MM-DD)/ Date (YYYY-MM-DD) : ";
+        getline(cin, newContract.date);
+        if (!isValidDate(newContract.date)) {
+            cout << "⚠️ Formato inválido. Intente de nuevo/Invalid format. Please try again.\n";
+        }
+    } while (!isValidDate(newContract.date));
 
-
-
-    cout << "Tipo (préstamo/seguro/inversión): ";
-    
+    cout << "Tipo (préstamo/seguro/inversión)/ Type (loan/insurance/investment)/: ";
     getline(cin, newContract.type);
-    newContract.type = normalizarTexto(newContract.type);
+    newContract.type = normalizeText(newContract.type);
 
-
-    cout << "Partes (ingrese 'fin' para terminar):\n";
+    cout << "Partes (ingrese 'fin' para terminar)/Parties (enter 'end' to finish):\n";
     string party;
     while (true) {
-        cout << "Nombre de la parte: ";
+        cout << "Nombre de la parte/ Name of the party:";
         getline(cin, party);
-        string partyCheck = normalizarTexto(party);
-        if (partyCheck == "FIN") break;
+        string partyCheck = normalizeText(party);
+        if (partyCheck == "FIN" || partyCheck == "END") break;
         newContract.parties.insert(partyCheck);
-
     }
 
-    cout << "Cláusulas (ingrese 'fin' para terminar):\n";
+    cout << "Cláusulas (ingrese 'fin' para terminar)/ Clauses (enter 'end' to finish):\n";
     string clause;
     while (true) {
-        cout << "Cláusula: ";
+        cout << "Cláusula/ Clause: ";
         getline(cin, clause);
-        string clauseCheck = normalizarTexto(clause);
-        if (clauseCheck == "FIN") break;
+        string clauseCheck = normalizeText(clause);
+        if (clauseCheck == "FIN" || clauseCheck == "END") break;
         newContract.clauses.push_back(clauseCheck);
     }
     return newContract;
 }
 // ---------------------------------------------------------------------
 
-
-string normalizarTexto(string input) {
-    // 1. Eliminar espacios al inicio y final
+// ---------------------------------------------------------------------
+//--------- Normalización de texto de fecha / Date normalization --------
+string normalizeText(string input) {
     size_t start = input.find_first_not_of(" \t\n\r");
     size_t end = input.find_last_not_of(" \t\n\r");
     if (start == string::npos) return "";
     input = input.substr(start, end - start + 1);
 
-    // 2. Reemplazar tildes y convertir a mayúsculas (sin switch)
-    string resultado = "";
+    string result = "";
     for (size_t i = 0; i < input.length(); ++i) {
         unsigned char c = input[i];
         // Detección de multibyte de tilde
         if (c == 195 && i + 1 < input.length()) {
             unsigned char next = input[i + 1];
-            if (next == 161) resultado += 'A'; // á
-            else if (next == 169) resultado += 'E'; // é
-            else if (next == 173) resultado += 'I'; // í
-            else if (next == 179) resultado += 'O'; // ó
-            else if (next == 186) resultado += 'U'; // ú
-            else if (next == 177) resultado += 'N'; // ñ
-            else resultado += '?'; // caracter raro
+            if (next == 161) result += 'A'; // á
+            else if (next == 169) result += 'E'; // é
+            else if (next == 173) result += 'I'; // í
+            else if (next == 179) result += 'O'; // ó
+            else if (next == 186) result += 'U'; // ú
+            else if (next == 177) result += 'N'; // ñ
+            else result += '?'; // caracter raro
             i++; // saltar el segundo byte
         } else {
-            resultado += toupper(c);
+            result += toupper(c);
         }
     }
 
-    return resultado;
+    return result;
 }
+// ---------------------------------------------------------------------
+//------------------- Validación de fecha / Date validation ------------
 
+bool isValidDate(string& date) {
+    size_t start = date.find_first_not_of(" \t\n\r");
+    size_t end = date.find_last_not_of(" \t\n\r");
+    if (start == string::npos) return false;
+    date = date.substr(start, end - start + 1);
 
+    // Reemplazar / por - si es necesario
+    for (char& ch : date) {
+        if (ch == '/') ch = '-';
+    }
 
+    // Validar formato YYYY-MM-DD
+    if (date.length() != 10) return false;
+    if (date[4] != '-' || date[7] != '-') return false;
 
+    string year = date.substr(0, 4);
+    string month = date.substr(5, 2);
+    string day = date.substr(8, 2);
 
+    for (char c : year + month + day) {
+        if (!isdigit(c)) return false;
+    }
 
+    int y = stoi(year);
+    int m = stoi(month);
+    int d = stoi(day);
 
+    if (y < 1960 || y > 2025) return false;
+    if (m < 1 || m > 12) return false;
+    if (d < 1 || d > 31) return false;
 
+    // Validar días por mes
+    if ((m == 4 || m == 6 || m == 9 || m == 11) && d > 30) return false;
+
+    // Validar febrero
+    if (m == 2) {
+        bool isLeap = (y % 400 == 0) || (y % 100 != 0 && y % 4 == 0);
+        if (d > (isLeap ? 29 : 28)) return false;
+    }
+
+    return true;
+}
+// ---------------------------------------------------------------------
 
 // -------------------- Clase AvlTree/Class AVLTree --------------------
 class AVLTree {
@@ -309,45 +340,53 @@ unsigned int generateHash(const string& key, int tableSize) {
     }
     return hashValue % tableSize;
 }
-// ---------------------------------------------------------------------
 
-string toBase36(unsigned int num) {
-    const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    string result = "";
+string toBase62(unsigned long long num) {
+    const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    string result;
     do {
-        result = chars[num % 36] + result;
-        num /= 36;
+        result = chars[num % 62] + result;
+        num /= 62;
     } while (num > 0);
     return result;
 }
 
-string generateUniqueId(const Contract& c, int tableSize = 101) {
-    string tipo = normalizarTexto(c.type);
-    string prefix;
-    if (tipo == "PRESTAMO")      prefix = "PRE-";
-    else if (tipo == "SEGURO")   prefix = "SEG-";
-    else if (tipo == "INVERSION")prefix = "INV-";
-    else                         prefix = "GEN-";
-
-
-
-    string clave = "";
-    for (const auto& p : c.parties)    clave += p + "|";
-    clave += c.date + "|" + c.type + "|";
-    for (const auto& cl : c.clauses)   clave += cl + "|";
-
-    unsigned int hashValue = 0;
-    for (char ch : clave) {
-        hashValue = 37 * hashValue + ch;
+unsigned long long djb2Hash(const string& str) {
+    unsigned long long hash = 5381; // Semilla inicial / Initial seed
+    for (char c : str) {
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
     }
-
-    string encoded = toBase36(hashValue % tableSize);
-    return prefix + encoded;
+    return hash;
 }
 
+string generateContractFingerprint(const Contract& c) {
+    string data;
+    data.reserve(256); // 
 
+    data += c.date + "|" + c.type + "|";
+    for (const auto& p : c.parties) data += p + "|";
+    for (const auto& cl : c.clauses) data += cl + "|";
 
+    unsigned long long hash1 = djb2Hash(data);
+    unsigned long long hash2 = 0;
+    for (size_t i = 0; i < data.size(); ++i) {
+        hash2 = (hash2 * 31) + data[i] ^ (i % 17); // Variante con XOR
+    }
 
+    unsigned long long combinedHash = hash1 ^ (hash2 << 16);
+    return toBase62(combinedHash).substr(0, 16); // ID de 16 caracteres / 16-char ID
+}
+
+string generateUniqueId(const Contract& c) {
+    string prefix;
+    if (c.type == "PRESTAMO")      prefix = "PRE-";
+    else if (c.type == "SEGURO")   prefix = "SEG-";
+    else if (c.type == "INVERSION")prefix = "INV-";
+    else                           prefix = "GEN-";
+
+    return prefix + generateContractFingerprint(c);
+}
+// ---------------------------------------------------------------------
 
 // -------------------- Clase HashTable/ Class HashTable ---------------
 // HashGenerator.cpp 
@@ -363,16 +402,13 @@ public:
     }
 
     int insert(const Contract& c) {
-        string clave = "";
-        for (const auto& p : c.parties) clave += p + "|";
-        clave += c.date + "|" + c.type;
-        int pos = generateHash(clave, tableSize);
+        int pos = generateHash(c.id, tableSize); 
         return table[pos].insert(c);
     }
 
     Contract* search(const string& id) const {
-        if (id.substr(0, 3) != "ID-") return nullptr;
-        int pos = stoi(id.substr(3)) % tableSize;
+        // --- Cambio clave: Eliminar la validación del prefijo "ID-" ---
+        int pos = generateHash(id, tableSize); // Usar el hash del ID completo
         return table[pos].search(id);
     }
 
@@ -382,11 +418,11 @@ public:
             while (temp != nullptr) {
                 if (temp->getData().type == type) {
                     Contract c = temp->getData();
-                    cout << "\n🧾 Contrato ID: " << c.id << "\n";
-                    cout << "Fecha: " << c.date << "\n";
-                    cout << "Partes: ";
+                    cout << "\n🧾 Contrato ID / Contract ID: " << c.id << "\n";
+                    cout << "Fecha / Date: " << c.date << "\n";
+                    cout << "Partes / Parties: ";
                     for (const auto& p : c.parties) cout << p << ", ";
-                    cout << "\nCláusulas:\n";
+                    cout << "\nCláusulas/ Clauses:\n";
                     for (const auto& cl : c.clauses) cout << "- " << cl << "\n";
                     cout << "---------------------------\n";
                 }
@@ -397,67 +433,81 @@ public:
 };
 // ---------------------------------------------------------------------
 
-bool esFechaValida(string& fecha) {
-    // Eliminar espacios alrededor
-    size_t start = fecha.find_first_not_of(" \t\n\r");
-    size_t end = fecha.find_last_not_of(" \t\n\r");
-    if (start == string::npos) return false;
-    fecha = fecha.substr(start, end - start + 1);
+// ---------------- Clase multilista/ Class multilist- -----------------
+class MultiList {
+private:
+    struct TypeNode {
+        std::string type;                
+        std::vector<std::string> ids;    
+        TypeNode* next;                  
 
-    // Reemplazar / por - si es necesario
-    for (char& ch : fecha) {
-        if (ch == '/') ch = '-';
+        TypeNode(const std::string& t) : type(t), next(nullptr) {}
+    };
+
+    TypeNode* head;
+
+public:
+    MultiList() : head(nullptr) {}
+
+    // Añadir contrato a la lista de su tipo
+    void addContract(const std::string& type, const std::string& id) {
+        TypeNode* current = head;
+        while (current) {
+            if (current->type == type) {
+                current->ids.push_back(id);
+                return;
+            }
+            current = current->next;
+        }
+        
+        TypeNode* newNode = new TypeNode(type);
+        newNode->ids.push_back(id);
+        newNode->next = head;
+        head = newNode;
     }
 
-    // Validar formato YYYY-MM-DD
-    if (fecha.length() != 10) return false;
-    if (fecha[4] != '-' || fecha[7] != '-') return false;
-
-    string anio = fecha.substr(0, 4);
-    string mes  = fecha.substr(5, 2);
-    string dia  = fecha.substr(8, 2);
-
-    for (char c : anio + mes + dia) {
-        if (!isdigit(c)) return false;
+    std::vector<std::string> getContractsByType(const std::string& type) const {
+        TypeNode* current = head;
+        while (current) {
+            if (current->type == type) return current->ids;
+            current = current->next;
+        }
+        return {};
     }
+};
+// ---------------------------------------------------------------------
 
-    int m = stoi(mes);
-    int d = stoi(dia);
-
-    if (m < 1 || m > 12) return false;
-    if (d < 1 || d > 31) return false;
-
-    return true;
-}
-
-
-
-
+// -------------------- PROTOTIPOS GLOBALES --------------------------
+void registerContract(AVLTree& avl, HashTable& ht, MultiList& ml);
+void searchByDate(const AVLTree& avl, const HashTable& hashTable);
+void displayContractDetails(const Contract& c);
+void displayMenu();
+// ---------------------------------------------------------------------
 // ---------- Registro de contrato AVL/Resgister contract AVL ----------
-
-void registerContract(AVLTree& avl, HashTable& hashTable) {
+void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml ) {
     Contract newContract = captureContractData();
-    
+
     string clave = "";
     for (const auto& p : newContract.parties) clave += p + "|";
     clave += newContract.date + "|" + newContract.type;
-    newContract.id = generateUniqueId(newContract);
-    cout << "\n🔑 ID generado: " << newContract.id << "\n";
+    newContract.id = generateUniqueId(newContract); 
+    cout << "\n🔑 ID generado/ ID generated: " << newContract.id << "\n";
 
     avl.insert(newContract.date, newContract.id);
     hashTable.insert(newContract); // Aquí se guarda el contrato completo
+     ml.addContract(newContract.type, newContract.id); 
 
     cout << "\n✅ Contrato registrado correctamente/Contract successfully registered:\n";
 }
 // ---------------------------------------------------------------------
 
 //---Función de búsqueda con fecha AVL/Search function with AVL date----
-
     void searchByDate(const AVLTree& avl, const HashTable& hashTable) {
         string date;
         cout << "\n🔍 Buscar por fecha (YYYY-MM-DD)/ Search by date: ";
         cin >> date;
-    
+        cin.ignore();
+
         vector<string> ids = avl.search(date);
         if (ids.empty()) {
             cout << "⚠️ No se encontró contrato con esa fecha/There are no contracts on this date\n";
@@ -466,7 +516,7 @@ void registerContract(AVLTree& avl, HashTable& hashTable) {
             for (const string& id : ids) {
                 Contract* c = hashTable.search(id);
                 if (c) {
-                    cout << "\n🧾 Contrato ID: " << c->id << "\n";
+                    cout << "\n🧾 Contrato ID/ Contract ID: " << c->id << "\n";
                     cout << "Fecha: " << c->date << "\n";
                     cout << "Tipo: " << c->type << "\n";
                     cout << "Partes: ";
@@ -476,13 +526,33 @@ void registerContract(AVLTree& avl, HashTable& hashTable) {
                     cout << "---------------------------\n";
                     delete c;
                 } else {
-                    cout << "⚠️ Contrato con ID " << id << " no encontrado en la tabla hash.\n";
+                    cout << "⚠️ Contrato con ID/ Contract with ID" << id << " no encontrado en la tabla hash/ not found in the hash table.\n";
                 }
             }
         }
     }
 // ---------------------------------------------------------------------
-    
+
+//-------- Mostrar contratos por tipo / Show contracts by type ---------
+void showContractsByType(const MultiList& ml, const HashTable& hashTable) {
+    string type;
+    cout << "Tipo (préstamo/seguro/inversión): ";
+    cin >> type;
+    type = normalizeText(type);  // ← ÚNICO CAMBIO: Normalizamos el input
+
+    vector<string> ids = ml.getContractsByType(type);
+    if (ids.empty()) {
+        cout << "⚠️ No hay contratos de tipo " << type << "\n";
+    } else {
+        cout << "📋 Contratos de tipo " << type << ":\n";
+        for (const string& id : ids) {
+            Contract* c = hashTable.search(id);
+            if (c) displayContractDetails(*c);
+            delete c;
+        }
+    }
+}
+// ---------------------------------------------------------------------
 // ------ Mostrar detalles del contrato / Display contract details  -----
 void displayContractDetails(const Contract& c) {
     cout << "\n🔎 Detalles del contrato/ Contract details:\n";
@@ -502,55 +572,57 @@ void displayMenu() {
     cout << "1. Registrar contrato / Register contract.\n";
     cout << "2. Buscar por fecha / Search by date.\n";
     cout << "3. Buscar por ID / Search by ID.\n";
-    cout << "4. Salir / Exit.\n";
+    cout << "4. Buscar por tipo / Search by type.\n";
+    cout << "5. Salir / Exit.\n";
     cout << "Opción / Choice: ";
 }
 // ---------------------------------------------------------------------
 
 // ------------------ Función Principal/ Main Function------------------
 int main() {
-    void registerContract(AVLTree& avl, HashTable& hashTable);
-    void searchByDate(const AVLTree& avl, const HashTable& hashTable);
-    void displayContractDetails(const Contract& c);
-    void displayMenu();
-
+    
     AVLTree avl;           
     HashTable hashTable;
-        
-    int option;
+    MultiList multiList;  
 
+    int option;
+    
     do {
         displayMenu();
         cin >> option;
-        cin.ignore();
-        
+
         switch(option) {
             case 1: 
-                registerContract(avl, hashTable); 
+                registerContract(avl, hashTable, multiList); 
                 break;
             case 2: 
                 searchByDate(avl, hashTable); 
                 break;
             case 3: {
-                    string id;
-                    cout << "\n🔎 BUSCAR POR ID\nIngrese el ID: ";
-                    getline(cin, id);
-                    Contract* c = hashTable.search(id);
-                        if (c) {
-                            displayContractDetails(*c);
-                                delete c;
-                        } else {
-                                cout << "⚠️ Contrato no encontrado.\n";
-                        }
-                            break;
-                    }
+                string id;
+                cout << "\n🔎 Buscar por ID / Search by ID: ";
+                cin.ignore();  
+                getline(cin, id);
+                Contract* c = hashTable.search(id);
+                if (c) {
+                    displayContractDetails(*c);
+                    delete c;
+                } else {
+                cout << "⚠️ Contrato no encontrado/Contract not found\n";
+                }
+                break;
+            }
             case 4:
+                cout << "🔎 Buscar por tipo / Search by type\n";
+                showContractsByType(multiList, hashTable); 
+                break;
+            case 5:
                 cout << "\n👋 Hasta luego/See you later.\n";
                 break;
             default:
                 cout << "Opción inválida/Invalid option.\n";
         }
-    } while (option != 4);
+    } while (option != 5);  
 
     return 0;
 }
