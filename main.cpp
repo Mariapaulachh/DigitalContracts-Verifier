@@ -232,27 +232,39 @@ Contract captureContractData() {
         cout << "Nombre de la parte/ Name of the party:";
         getline(cin, party);
         string partyCheck = normalizeText(party);
-        if (partyCheck == "FIN" || partyCheck == "END") break;
+        if (partyCheck == "FIN" || partyCheck == "END") {
+            if (newContract.parties.empty()) {
+                cout << "⚠️ Debe ingresar al menos una parte/You must enter at least one party.\n";
+                continue;
+            } else {
+                break;
+            }
+        }
         newContract.parties.insert(partyCheck);
     }
+    
+       // Captura de cláusulas (asegurar al menos una)
+        cout << "Cláusulas (ingrese 'fin' para terminar)/ Clauses (enter 'end' to finish):\n";
+        string clause;
+        while (true) {
+            cout << "Cláusula/ Clause: ";
+            getline(cin, clause);
+            string clauseCheck = normalizeText(clause);
+            if (clauseCheck == "FIN" || clauseCheck == "END") {
+                if (newContract.clauses.empty()) {
+                    cout << "⚠️ Debe ingresar al menos una cláusula/You must enter at least one clause.\n";
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            newContract.clauses.push_back(clauseCheck);
+        }
 
-    cout << "Cláusulas (ingrese 'fin' para terminar)/ Clauses (enter 'end' to finish):\n";
-    string clause;
-    while (true) {
-        cout << "Cláusula/ Clause: ";
-        getline(cin, clause);
-        string clauseCheck = normalizeText(clause);
-        if (clauseCheck == "FIN" || clauseCheck == "END") break;
-        newContract.clauses.push_back(clauseCheck);
+        newContract.normalizedType = normalizeText(newContract.type);
+        return newContract;
     }
-
-    newContract.normalizedType = normalizeText(newContract.type);
-    return newContract;
-
-}
 // ---------------------------------------------------------------------
-
-
 
 // -------------------- Clase AvlTree/Class AVLTree --------------------
 class AVLTree {
@@ -424,7 +436,7 @@ string generateUniqueId(const Contract& c) {
 }
     
 // ---------------------------------------------------------------------
-
+//---------------- Clase HashTable/Class HashTable ---------------------
 class HashTable {
 private:
     vector<Lista<Contract>> table;
@@ -514,7 +526,7 @@ public:
 };
 // ---------------------------------------------------------------------
 
-// -------------------- PROTOTIPOS GLOBALES --------------------------
+// ----------- Prototipos globales/Global prototypes  -------------------
 void registerContract(AVLTree& avl, HashTable& ht, MultiList& ml);
 void searchByDate(const AVLTree& avl, const HashTable& hashTable);
 void displayContractDetails(const Contract& c);
