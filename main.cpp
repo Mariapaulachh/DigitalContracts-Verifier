@@ -32,7 +32,7 @@ struct Contract {
     set<string> parties; // Partes involucradas / Involved parties. MP Chaparro, DF Mosquera.
     vector<string> clauses; // Cláusulas / Contract clauses. MP Chaparro, DF Mosquera.
 };
-// ---------------------------------------------------------------------d
+// ---------------------------------------------------------------------
 // ------------ Lista enlazada simple / Singly linked list  -------------
 template <typename T>
 class Node {
@@ -119,7 +119,6 @@ string normalizeText(string input) {
     string result = "";
     for (size_t i = 0; i < input.length(); ++i) {
         unsigned char c = input[i];
-        // Detección de multibyte de tilde
         if (c == 195 && i + 1 < input.length()) {
             unsigned char next = input[i + 1];
             if (next == 161) result += 'A'; // á
@@ -128,8 +127,8 @@ string normalizeText(string input) {
             else if (next == 179) result += 'O'; // ó
             else if (next == 186) result += 'U'; // ú
             else if (next == 177) result += 'N'; // ñ
-            else result += '?'; // caracter raro
-            i++; // saltar el segundo byte
+            else result += '?'; 
+            i++; 
         } else {
             result += toupper(c);
         }
@@ -146,12 +145,10 @@ bool isValidDate(string& date) {
     if (start == string::npos) return false;
     date = date.substr(start, end - start + 1);
 
-    // Reemplazar / por - si es necesario
     for (char& ch : date) {
         if (ch == '/') ch = '-';
     }
 
-    // Validar formato YYYY-MM-DD
     if (date.length() != 10) return false;
     if (date[4] != '-' || date[7] != '-') return false;
 
@@ -171,10 +168,8 @@ bool isValidDate(string& date) {
     if (m < 1 || m > 12) return false;
     if (d < 1 || d > 31) return false;
 
-    // Validar días por mes
     if ((m == 4 || m == 6 || m == 9 || m == 11) && d > 30) return false;
 
-    // Validar febrero
     if (m == 2) {
         bool isLeap = (y % 400 == 0) || (y % 100 != 0 && y % 4 == 0);
         if (d > (isLeap ? 29 : 28)) return false;
@@ -215,9 +210,8 @@ Contract captureContractData() {
     } while (!isValidDate(newContract.date));
 
     cout << "Tipo (préstamo/seguro/inversión)/ Type (loan/insurance/investment)/: ";
-    getline(cin, newContract.type); // Guardamos el texto original (sin normalizar aún)
+    getline(cin, newContract.type); 
 
-    // Mantener el tipo original para mostrar, pero validar con normalizado
     string normalizedType = normalizeText(newContract.type);
     if (!(normalizedType == "PRESTAMO" || normalizedType == "LOAN" || 
           normalizedType == "SEGURO" || normalizedType == "INSURANCE" ||
@@ -243,7 +237,6 @@ Contract captureContractData() {
         newContract.parties.insert(partyCheck);
     }
     
-       // Captura de cláusulas (asegurar al menos una)
         cout << "Cláusulas (ingrese 'fin' para terminar)/ Clauses (enter 'end' to finish):\n";
         string clause;
         while (true) {
@@ -271,7 +264,7 @@ class AVLTree {
 private:
     struct AvlNode {
         string date;
-        vector<string> contractIds;  // Cambiamos a vector para múltiples IDs
+        vector<string> contractIds;  
         AvlNode* left;
         AvlNode* right;
         int height;
@@ -371,11 +364,9 @@ private:
             return search(date, root);
         }
     };
-
 // ---------------------------------------------------------------------
 
 // ----------------- Generador de Hash / Hash Generator -----------------
-
 unsigned int generateHash(const string& key, int tableSize) {
     unsigned int hashValue = 0;
     for (int i = 0; i < key.length(); i++) {
@@ -434,9 +425,7 @@ string generateUniqueId(const Contract& c) {
 
     return prefix + fingerprint;
 }
-    
 // ---------------------------------------------------------------------
-//---------------- Clase HashTable/Class HashTable ---------------------
 //---------------- Clase HashTable/Class HashTable ---------------------
 class HashTable {
 private:
@@ -461,12 +450,12 @@ public:
         for (int i = 0; i < tableSize; i++) {
             Node<Contract>* temp = table[i].getHead();
             while (temp != nullptr) {
-                Contract* c = new Contract(temp->getData()); // Copia del contrato
+                Contract* c = new Contract(temp->getData()); 
                 allContracts.push_back(c);
                 temp = temp->getNext();
             } // <-- Cierra el while
         } // <-- Cierra el for
-        return allContracts; // <-- Añade el return
+        return allContracts;
     } // <-- Cierra el método
 
     void displayByType(const string& type) {
@@ -549,24 +538,22 @@ void mergeSortByDate(vector<Contract*>& contracts);
 void mergeSort(vector<Contract*>& contracts);
 void merge(vector<Contract*>& left, vector<Contract*>& right, vector<Contract*>& contracts);
 void displayAllContractsSorted(HashTable& hashTable);
-
 // ---------------------------------------------------------------------
 // ---------- Registro de contrato AVL/Resgister contract AVL ----------
 void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml) {
     Contract newContract = captureContractData();
 
     string normalizedType = normalizeText(newContract.type);
-    newContract.id = generateUniqueId(newContract); // Internamente usa normalizedType
+    newContract.id = generateUniqueId(newContract); 
 
     cout << "\n🔑 ID generado: " << newContract.id << "\n";
 
     avl.insert(newContract.date, newContract.id);
     hashTable.insert(newContract);
-    ml.addContract(normalizedType, newContract.id); // Usa el tipo normalizado
+    ml.addContract(normalizedType, newContract.id); 
 
     cout << "\n✅ Contrato registrado correctamente.\n";
 }
-
 // ---------------------------------------------------------------------
 // --------- Implementación Merge Sort para contratos / Merge Sort implementation ---------
 void mergeSortByDate(vector<Contract*>& contracts) {
@@ -615,7 +602,6 @@ void merge(vector<Contract*>& left, vector<Contract*>& right, vector<Contract*>&
 }
 // ---------------------------------------------------------------------
 
-//---Función de búsqueda con fecha AVL/Search function with AVL date----
 //---Función de búsqueda con fecha AVL/Search function with AVL date----
 void searchByDate(const AVLTree& avl, const HashTable& hashTable) {
     string date;
@@ -778,7 +764,6 @@ int main() {
                 cout << "\n🔎 Buscar por ID / Search by ID: ";
                 getline(cin, id);
 
-                // Eliminar TODOS los espacios (incluidos internos)
                 id.erase(remove_if(id.begin(), id.end(), ::isspace), id.end());
 
                 Contract* c = hashTable.search(id);
