@@ -1,1 +1,165 @@
-hola
+/* Estilos principales para el Sistema de Contratos Digitales */
+
+html {
+  font-size: 62.5%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Titillium Web', sans-serif;
+  line-height: 1.4;
+  font-size: 1.6rem;
+  color: #333;
+  background-color: #f7f9fb;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4 {
+  color: #1a2b4c;
+}
+
+h1 {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 3.2rem;
+  text-align: center;
+  margin: 4rem 0 2rem;
+  position: relative;
+}
+
+h2::after {
+  content: "";
+  width: 6rem;
+  height: .5rem;
+  background: #30bae7;
+  display: block;
+  margin: 1rem auto 0;
+  border-radius: 1rem;
+}
+
+h3 {
+  font-size: 2.2rem;
+  margin-top: 2rem;
+}
+
+h4 {
+  font-size: 1.8rem;
+  margin-top: 2rem;
+  font-weight: 600;
+}
+
+section {
+  padding: 6rem 2rem;
+}
+
+.row {
+  max-width: 114rem;
+  margin: 0 auto;
+}
+
+.btn {
+  background-color: #30bae7;
+  color: white;
+  padding: 1.2rem 3rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  border-radius: .5rem;
+  font-weight: 600;
+  font-size: 1.6rem;
+  display: inline-block;
+  margin-top: 2rem;
+  border: none;
+}
+
+.btn:hover {
+  background-color: #279dc2;
+  cursor: pointer;
+}
+
+header {
+  background: linear-gradient(to bottom, #196b8b, #30bae7);
+  color: white;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 0 2rem;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.main-nav {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+  padding: 0;
+}
+
+.main-nav li {
+  margin: 0 1rem;
+}
+
+.main-nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 1.4rem;
+}
+
+.main-nav .active a,
+.main-nav a:hover {
+  text-decoration: underline;
+}
+
+.hero-text-box {
+  max-width: 70rem;
+  margin: 0 auto;
+}
+
+.box {
+  text-align: center;
+  padding: 2rem;
+}
+
+.little-description {
+  font-size: 1.8rem;
+  color: #555;
+  text-align: center;
+  margin: 1rem auto 3rem;
+  max-width: 70rem;
+}
+
+.contact-section form {
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
+.contact-section input,
+.contact-section textarea {
+  width: 100%;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ccc;
+  border-radius: .5rem;
+  font-size: 1.6rem;
+}
+
+.footer-section {
+  background-color: #1a2b4c;
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.4rem;
+}
