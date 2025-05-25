@@ -437,6 +437,7 @@ string generateUniqueId(const Contract& c) {
     
 // ---------------------------------------------------------------------
 //---------------- Clase HashTable/Class HashTable ---------------------
+//---------------- Clase HashTable/Class HashTable ---------------------
 class HashTable {
 private:
     vector<Lista<Contract>> table;
@@ -454,6 +455,19 @@ public:
         int pos = hash % tableSize;
         return table[pos].search(id);
     }
+
+    vector<Contract*> getAllContracts() const {
+        vector<Contract*> allContracts;
+        for (int i = 0; i < tableSize; i++) {
+            Node<Contract>* temp = table[i].getHead();
+            while (temp != nullptr) {
+                Contract* c = new Contract(temp->getData()); // Copia del contrato
+                allContracts.push_back(c);
+                temp = temp->getNext();
+            } // <-- Cierra el while
+        } // <-- Cierra el for
+        return allContracts; // <-- Añade el return
+    } // <-- Cierra el método
 
     void displayByType(const string& type) {
         for (int i = 0; i < tableSize; i++) {
@@ -530,8 +544,12 @@ public:
 void registerContract(AVLTree& avl, HashTable& ht, MultiList& ml);
 void searchByDate(const AVLTree& avl, const HashTable& hashTable);
 void displayContractDetails(const Contract& c);
-
 void displayMenu();
+void mergeSortByDate(vector<Contract*>& contracts);
+void mergeSort(vector<Contract*>& contracts);
+void merge(vector<Contract*>& left, vector<Contract*>& right, vector<Contract*>& contracts);
+void displayAllContractsSorted(HashTable& hashTable);
+
 // ---------------------------------------------------------------------
 // ---------- Registro de contrato AVL/Resgister contract AVL ----------
 void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml) {
@@ -548,38 +566,94 @@ void registerContract(AVLTree& avl, HashTable& hashTable, MultiList& ml) {
 
     cout << "\n✅ Contrato registrado correctamente.\n";
 }
+
+// ---------------------------------------------------------------------
+// --------- Implementación Merge Sort para contratos / Merge Sort implementation ---------
+void mergeSortByDate(vector<Contract*>& contracts) {
+    if (contracts.size() <= 1) return;
+    mergeSort(contracts);
+}
+
+void mergeSort(vector<Contract*>& contracts) {
+    if (contracts.size() <= 1) return;
+
+    int mid = contracts.size() / 2;
+    vector<Contract*> left(contracts.begin(), contracts.begin() + mid);
+    vector<Contract*> right(contracts.begin() + mid, contracts.end());
+
+    mergeSort(left);
+    mergeSort(right);
+    merge(left, right, contracts);
+}
+
+void merge(vector<Contract*>& left, vector<Contract*>& right, vector<Contract*>& contracts) {
+    int i = 0, j = 0, k = 0;
+
+    while (i < left.size() && j < right.size()) {
+        // Comparar fechas (de más reciente a menos reciente)
+        if (left[i]->date >= right[j]->date) {
+            contracts[k] = left[i];
+            i++;
+        } else {
+            contracts[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < left.size()) {
+        contracts[k] = left[i];
+        i++;
+        k++;
+    }
+
+    while (j < right.size()) {
+        contracts[k] = right[j];
+        j++;
+        k++;
+    }
+}
 // ---------------------------------------------------------------------
 
 //---Función de búsqueda con fecha AVL/Search function with AVL date----
-    void searchByDate(const AVLTree& avl, const HashTable& hashTable) {
-        string date;
-        cout << "\n🔍 Buscar por fecha (YYYY-MM-DD)/ Search by date: ";
-        cin >> date;
-        cin.ignore();
+//---Función de búsqueda con fecha AVL/Search function with AVL date----
+void searchByDate(const AVLTree& avl, const HashTable& hashTable) {
+    string date;
+    cout << "\n🔍 Buscar por fecha (YYYY-MM-DD)/ Search by date: ";
+    cin >> date;
+    cin.ignore();
 
-        vector<string> ids = avl.search(date);
-        if (ids.empty()) {
-            cout << "⚠️ No se encontró contrato con esa fecha/There are no contracts on this date\n";
-        } else {
-            cout << "📅 Contratos encontrados en esta fecha/Contracts found on this date:\n";
-            for (const string& id : ids) {
-                Contract* c = hashTable.search(id);
-                if (c) {
-                    cout << "\n🧾 Contrato ID/ Contract ID: " << c->id << "\n";
-                    cout << "Fecha: " << c->date << "\n";
-                    cout << "Tipo: " << c->type << "\n";
-                    cout << "Partes: ";
-                    for (const auto& p : c->parties) cout << p << ", ";
-                    cout << "\nCláusulas:\n";
-                    for (const auto& cl : c->clauses) cout << "- " << cl << "\n";
-                    cout << "---------------------------\n";
-                    delete c;
-                } else {
-                    cout << "⚠️ Contrato con ID/ Contract with ID" << id << " no encontrado en la tabla hash/ not found in the hash table.\n";
-                }
+    vector<string> ids = avl.search(date);
+    if (ids.empty()) {
+        cout << "⚠️ No se encontró contrato con esa fecha/There are no contracts on this date\n";
+    } else {
+        // Obtener todos los contratos para esa fecha
+        vector<Contract*> contracts;
+        for (const string& id : ids) {
+            Contract* c = hashTable.search(id);
+            if (c) {
+                contracts.push_back(c);
             }
         }
+
+        // Ordenar los contratos por fecha (más reciente primero)
+        mergeSortByDate(contracts);
+
+        cout << "📅 Contratos encontrados en esta fecha (ordenados por fecha más reciente)/Contracts found on this date (sorted by most recent):\n";
+        for (Contract* c : contracts) {
+            cout << "\n🧾 Contrato ID/ Contract ID: " << c->id << "\n";
+            cout << "Fecha: " << c->date << "\n";
+            cout << "Tipo: " << c->type << "\n";
+            cout << "Partes: ";
+            for (const auto& p : c->parties) cout << p << ", ";
+            cout << "\nCláusulas:\n";
+            for (const auto& cl : c->clauses) cout << "- " << cl << "\n";
+            cout << "---------------------------\n";
+            delete c;
+        }
     }
+}
+// ---------------------------------------------------------------------
 // ---------------------------------------------------------------------
 
 //-------- Mostrar contratos por tipo / Show contracts by type ---------
@@ -644,6 +718,26 @@ void displayContractDetails(const Contract& c) {
     for (const auto& cl : c.clauses) cout << "• " << cl << "\n";
 }
 // ---------------------------------------------------------------------
+// ---- Mostrar todos los contratos ordenados / Display all contracts sorted ---
+void displayAllContractsSorted(HashTable& hashTable) {
+    vector<Contract*> allContracts = hashTable.getAllContracts();
+
+    if (allContracts.empty()) {
+        cout << "⚠️ No hay contratos registrados / No contracts registered.\n";
+        return;
+    }
+
+    // Ordenar usando Merge Sort
+    mergeSortByDate(allContracts);
+
+    cout << "\n📋 Todos los contratos (ordenados por fecha más reciente) / All contracts (sorted by most recent):\n";
+    for (Contract* c : allContracts) {
+        displayContractDetails(*c);
+        cout << "---------------------------\n";
+        delete c; // Liberar memoria
+    }
+}
+// ---------------------------------------------------------------------
 
 // -------------------- Menú principal / Main menu----------------------
 void displayMenu() {
@@ -652,7 +746,8 @@ void displayMenu() {
     cout << "2. Buscar por fecha / Search by date.\n";
     cout << "3. Buscar por ID / Search by ID.\n";
     cout << "4. Buscar por tipo / Search by type.\n";
-    cout << "5. Salir / Exit.\n";
+    cout << "5. Contratos en orden cronologico / Contracts in chronological order .\n";
+    cout << "6. Salir / Exit.\n";
     cout << "Opción / Choice: ";
 }
 // ---------------------------------------------------------------------
@@ -700,12 +795,14 @@ int main() {
                 showContractsByType(multiList, hashTable); 
                 break;
             case 5:
+                displayAllContractsSorted(hashTable); break; 
+            case 6:
                 cout << "\n👋 Hasta luego/See you later.\n";
                 break;
             default:
                 cout << "Opción inválida/Invalid option.\n";
         }
-    } while (option != 5);  
+    } while (option != 6);  
 
     return 0;
 }
